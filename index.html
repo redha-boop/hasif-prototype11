@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>منصة حصيف — النموذج الأولي v14</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      --brand:#5aa044;      /* Hasseef green */
+      --accent:#f8be43;     /* Hasseef yellow */
+      --ink:#0f172a;
+      --muted:#61708a;
+      --card:#fff;
+      --bg:linear-gradient(180deg,#f7fcf5, #f2f6fb);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{background:var(--bg);color:var(--ink);font-family:'Tajawal',system-ui,-apple-system,Segoe UI,Roboto,'Noto Kufi Arabic',sans-serif;-webkit-font-smoothing:antialiased}
+    .container{max-width:1200px;margin:0 auto;padding:0 1rem}
+    .hdr{position:sticky;top:0;background:#ffffffe6;backdrop-filter:blur(8px);border-bottom:1px solid #e5e7eb;z-index:40}
+    .card{background:var(--card);border-radius:var(--radius);padding:1.25rem;box-shadow:0 20px 50px rgba(15,23,42,.06)}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1rem;border-radius:12px;border:1px solid transparent;transition:.15s}
+    .btn-primary{background:var(--brand);color:#fff}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 20px rgba(90,160,68,.25)}
+    .btn-accent{background:var(--accent);color:#111827}
+    .pill{border:1px solid #e5e7eb;border-radius:999px;padding:.3rem .7rem}
+    .kpi{background:linear-gradient(180deg,#eef7ef,#ffffff);border:1px solid #e6f0e7;border-radius:16px;padding:1rem}
+    table{border-collapse:collapse;width:100%}
+    th,td{border-bottom:1px solid #e5e7eb;padding:.6rem;text-align:right}
+    thead th{background:#f8fafc;font-size:.85rem}
+    .search{border:1px solid #e5e7eb;border-radius:12px;padding:.55rem .85rem;width:100%}
+    .tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:.25rem 0 1rem}
+    .tab{padding:.45rem .8rem;border-radius:10px;border:1px solid #e5e7eb;cursor:pointer}
+    .tab.active{background:#111827;color:#fff}
+    #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:.6rem 1rem;border-radius:12px;display:none;z-index:60}
+    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+    .tile{display:block;border:1px solid #e5e7eb;border-radius:16px;padding:1rem;background:#fff;transition:.2s}
+    .tile:hover{transform:translateY(-2px);box-shadow:0 12px 20px rgba(15,23,42,.07)}
+  </style>
+</head>
+<body>
+<header class="hdr">
+  <div class="container py-3 flex items-center justify-between">
+    <a href="#/" class="flex items-center gap-3">
+      <img src="assets/logo.svg" alt="شعار منصة حصيف" class="w-10 h-10 rounded-lg"/>
+      <div>
+        <div class="text-lg font-extrabold">منصة حصيف — Hasseef</div>
+        <div class="text-xs text-slate-500">منصة وطنية للتكامل التنموي</div>
+      </div>
+    </a>
+    <nav class="hidden md:flex items-center gap-2 text-sm">
+      <a class="pill hover:bg-slate-900 hover:text-white" href="#/login">تسجيل الدخول</a>
+      <a class="pill hover:bg-slate-900 hover:text-white" href="#/select">اختيار الحساب</a>
+      <a class="pill hover:bg-slate-900 hover:text-white" href="#/sponsorships">فرص الرعاية</a>
+      <a class="pill hover:bg-slate-900 hover:text-white" href="#/trainer">المدربين والمتحدثين</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container py-6">
+  <div id="app"></div>
+  <div id="toast"></div>
+</main>
+
+<footer class="container py-8 text-center text-xs text-slate-500">© Hasseef Prototype v14 — الألوان #5aa044 & #f8be43</footer>
+
+<script>
+const app = document.getElementById('app');
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2200);}
+function guard(){if(!localStorage.getItem('session')) location.hash='/login';}
+function tableEnhance(root){
+  root.querySelectorAll('table.interactive').forEach(table=>{
+    const bar=document.createElement('div');bar.className='flex items-center gap-2 my-2';
+    const s=document.createElement('input');s.placeholder='ابحث...';s.className='search max-w-sm';
+    const c=document.createElement('div');c.className='text-xs text-slate-500';
+    bar.appendChild(s);bar.appendChild(c);table.parentElement.insertBefore(bar,table);
+    function filter(){const q=s.value.toLowerCase();let vis=0;table.querySelectorAll('tbody tr').forEach(tr=>{const ok=tr.innerText.toLowerCase().includes(q);tr.style.display=ok?'':'none';if(ok)vis++;});c.textContent=vis+' / '+table.tBodies[0].rows.length+' صف';}
+    s.addEventListener('input',filter);filter();
+  });
+}
+function tabsEnhance(root){root.querySelectorAll('.tabs').forEach(t=>{t.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.tab;t.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');const sc=t.closest('.tab-scope');sc.querySelectorAll('[data-tabpanel]').forEach(p=>p.classList.toggle('hidden',p.dataset.tabpanel!==n));}));});}
+
+const Projects=[
+  {id:1,name:'سقيا الماء',owner:'جمعية البر',start:'2026-01-01',end:'2026-06-30',progress:65,budget:300000,spent:280000,status:'جارٍ',region:'الرياض'},
+  {id:2,name:'منتدى التحول الرقمي',owner:'وزارة الاتصالات',start:'2026-03-01',end:'2026-03-30',progress:90,budget:2000000,spent:1800000,status:'مكتمل',region:'الرياض'},
+  {id:3,name:'مبادرة التشجير',owner:'إمارة مكة',start:'2026-02-01',end:'2026-08-30',progress:25,budget:50000000,spent:12000000,status:'متأخر',region:'مكة'}
+];
+const Sponsorships=[
+  {id:101,ownerType:'الحكومة',title:'أسبوع الابتكار الوطني',need:'رعاية إعلامية/مالية',sdg:'الصناعة والابتكار',budget:'1.5M',deadline:'2026-04-15'},
+  {id:102,ownerType:'الإمارة',title:'مهرجان التنمية بحائل',need:'تمويل لوجستي',sdg:'مدن مستدامة',budget:'3M',deadline:'2026-05-10'},
+  {id:103,ownerType:'جامعة',title:'مؤتمر البحث والابتكار',need:'رعاية شركات',sdg:'تعليم جيد',budget:'2M',deadline:'2026-04-01'},
+  {id:104,ownerType:'جمعية',title:'حملة دفء الشتاء',need:'رعاية مالية',sdg:'القضاء على الفقر',budget:'500K',deadline:'2026-12-01'}
+];
+const Facilities=[
+  {id:11,provider:'جامعة الملك سعود',name:'قاعة المؤتمرات A',city:'الرياض',capacity:300,status:'متاح'},
+  {id:12,provider:'شركة تقنية',name:'مسرح الابتكار',city:'جدة',capacity:500,status:'متاح'}
+];
+const Trainers=[
+  {id:21,name:'د. سارة العبدالله',topic:'تحليل البيانات',mode:'عن بعد',rating:4.8},
+  {id:22,name:'م. سالم الشمري',topic:'ريادة الأعمال',mode:'حضوري',rating:4.6}
+];
+
+function Home(){return `
+<section class="grid lg:grid-cols-2 gap-3 mb-6">
+  <div class="card">
+    <div class="flex items-center gap-3 mb-3">
+      <img src="assets/logo.svg" alt="شعار حصيف" class="w-10 h-10 rounded-lg"/>
+      <div class="text-2xl font-extrabold">منصة حصيف للتكامل التنموي</div>
+    </div>
+    <p class="text-slate-600">منصة وطنية تجمع الحكومة والخاص وغير الربحي والجامعات والأفراد والمانحين في منظومة واحدة.</p>
+    <div class="mt-4 flex gap-2">
+      <a class="btn btn-primary text-sm" href="#/select">ابدأ الآن</a>
+      <a class="btn btn-accent text-sm" href="#/sponsorships">فرص الرعاية</a>
+    </div>
+  </div>
+  <div class="card">
+    <div class="font-bold mb-2">مؤشرات عامة</div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="kpi"><div class="font-semibold">مشاريع نشطة</div><div class="text-2xl">42</div></div>
+      <div class="kpi"><div class="font-semibold">فرص رعاية</div><div class="text-2xl">${Sponsorships.length}</div></div>
+      <div class="kpi"><div class="font-semibold">فعاليات قادمة</div><div class="text-2xl">18</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="card tab-scope">
+  <div class="flex items-center justify-between mb-2">
+    <div class="font-bold">آخر المستجدات</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="opps">الفرص</button>
+      <button class="tab" data-tab="events">الفعاليات</button>
+      <button class="tab" data-tab="jobs">الوظائف</button>
+    </div>
+  </div>
+  <div data-tabpanel="opps">
+    <div class="overflow-auto"><table class="interactive"><thead><tr><th>النوع</th><th>العنوان</th><th>الجهة</th><th>الحالة</th></tr></thead>
+    <tbody><tr><td>رعاية</td><td>أسبوع الابتكار الوطني</td><td>حكومي</td><td>مفتوح</td></tr>
+    <tr><td>وظيفة</td><td>منسق برامج</td><td>جمعية خيرية</td><td>متاحة</td></tr></tbody></table></div>
+  </div>
+  <div class="hidden" data-tabpanel="events">
+    <div class="overflow-auto"><table class="interactive"><thead><tr><th>الفعالية</th><th>المنطقة</th><th>التاريخ</th><th>الحالة</th></tr></thead>
+    <tbody><tr><td>ملتقى الاستدامة</td><td>الرياض</td><td>2026-04-02</td><td>معتمد</td></tr></tbody></table></div>
+  </div>
+  <div class="hidden" data-tabpanel="jobs">
+    <div class="overflow-auto"><table class="interactive"><thead><tr><th>الوظيفة</th><th>الجهة</th><th>المدينة</th><th>الحالة</th></tr></thead>
+    <tbody><tr><td>محلل بيانات</td><td>شركة تقنية</td><td>الرياض</td><td>مفتوحة</td></tr></tbody></table></div>
+  </div>
+</section>`;}
+
+function Login(){return `<div class="max-w-md mx-auto card"><div class="font-bold mb-2">تسجيل الدخول</div>
+<form class="grid gap-3" onsubmit="event.preventDefault(); localStorage.setItem('session','ok'); location.hash='/select';">
+<input class="search" placeholder="البريد الإلكتروني"><input class="search" placeholder="كلمة المرور" type="password">
+<button class="btn btn-primary">دخول</button><div class="text-xs text-slate-500">* محاكاة دخول لأغراض العرض.</div></form></div>`;}
+
+function Select(){guard(); return `<div class="card"><div class="font-bold mb-2">اختر نوع الحساب</div>
+<div class="grid4">
+  <a class="tile" href="#/gov"><div class="font-semibold">الحكومة</div><div class="text-sm text-slate-600">مشاريع + فعاليات + رعايات + تتبع</div></a>
+  <a class="tile" href="#/emirate"><div class="font-semibold">الإمارة</div><div class="text-sm text-slate-600">محافل + رعاية الأمير + رعايات</div></a>
+  <a class="tile" href="#/private"><div class="font-semibold">القطاع الخاص</div><div class="text-sm text-slate-600">CSR + استثمار + مرافق</div></a>
+  <a class="tile" href="#/nonprofit"><div class="font-semibold">غير الربحي</div><div class="text-sm text-slate-600">حملات + تطوع + رعايات</div></a>
+  <a class="tile" href="#/university"><div class="font-semibold">الجامعات</div><div class="text-sm text-slate-600">بحوث + مرافق + حاضنات</div></a>
+  <a class="tile" href="#/individual"><div class="font-semibold">الأفراد</div><div class="text-sm text-slate-600">مبادرات + وظائف + تدريب</div></a>
+  <a class="tile" href="#/donor"><div class="font-semibold">المانحون</div><div class="text-sm text-slate-600">محفظة منح + تقارير أثر</div></a>
+  <a class="tile" href="#/adaa"><div class="font-semibold">أداء (شريك)</div><div class="text-sm text-slate-600">مؤشرات + مراجعات</div></a>
+</div></div>`;}
+
+function SponsorshipsView(){return `<div class="card"><div class="font-bold mb-2">فرص الرعاية</div>
+<div class="overflow-auto"><table class="interactive"><thead><tr><th>العنوان</th><th>الجهة</th><th>الاحتياج</th><th>SDG</th><th>الميزانية</th><th>آخر موعد</th><th>تقديم</th></tr></thead>
+<tbody>${Sponsorships.map(s=>`<tr><td>${s.title}</td><td>${s.ownerType}</td><td>${s.need}</td><td>${s.sdg}</td><td>${s.budget}</td><td>${s.deadline}</td><td><button class="btn btn-accent text-xs" onclick="toast('تم إرسال طلب الرعاية')">طلب</button></td></tr>`).join('')}</tbody></table></div></div>`;}
+
+function ProjectTrackingView(){return `<section class="card mb-6"><div class="font-bold mb-2">لوحة متابعة المشاريع</div>
+<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-2">
+  <div class="kpi"><div class="font-semibold">جارية</div><div class="text-2xl">${Projects.filter(p=>p.status==='جارٍ').length}</div></div>
+  <div class="kpi"><div class="font-semibold">مكتملة</div><div class="text-2xl">${Projects.filter(p=>p.status==='مكتمل').length}</div></div>
+  <div class="kpi"><div class="font-semibold">متأخرة</div><div class="text-2xl">${Projects.filter(p=>p.status==='متأخر').length}</div></div>
+  <div class="kpi"><div class="font-semibold">إجمالي الميزانيات</div><div class="text-2xl">${(Projects.reduce((a,b)=>a+b.budget,0)/1e6).toFixed(1)}M</div></div>
+</div>
+<div class="overflow-auto"><table class="interactive"><thead><tr><th>المشروع</th><th>الجهة</th><th>المدة</th><th>الإنجاز</th><th>الميزانية/المصروف</th><th>الحالة</th><th>عرض</th></tr></thead>
+<tbody>${Projects.map(p=>`<tr><td>${p.name}</td><td>${p.owner}</td><td>${p.start} → ${p.end}</td>
+<td><div class="w-40 h-2 bg-slate-200 rounded"><div style="width:${p.progress}%;background:var(--brand)" class="h-2 rounded"></div></div><div class="text-xs">${p.progress}%</div></td>
+<td>${p.spent.toLocaleString()} / ${p.budget.toLocaleString()}</td><td>${p.status}</td>
+<td><a class="btn btn-primary text-xs" href="#/project/${p.id}">تفاصيل</a></td></tr>`).join('')}</tbody></table></div></section>`;}
+
+function ProjectDetail(id){
+  const p=Projects.find(x=>x.id==id)||Projects[0];
+  return `<div class="card">
+  <div class="font-extrabold text-lg mb-1">${p.name}</div>
+  <div class="text-sm text-slate-600 mb-3">الجهة المنفذة: ${p.owner} — المنطقة: ${p.region}</div>
+  <div class="grid md:grid-cols-2 gap-3">
+    <div class="kpi"><div class="font-semibold mb-1">المخطط الزمني</div><div class="text-sm text-slate-500">Placeholder Gantt ${p.start} → ${p.end}</div></div>
+    <div class="kpi"><div class="font-semibold mb-1">المؤشرات</div><div class="text-sm">الإنجاز: ${p.progress}% — الحالة: ${p.status}</div></div>
+    <div class="kpi"><div class="font-semibold mb-1">الموازنة</div><div class="text-sm">المصروف: ${p.spent.toLocaleString()} / ${p.budget.toLocaleString()}</div></div>
+    <div class="kpi"><div class="font-semibold mb-1">ملفات وتقارير</div><button class="btn btn-accent text-xs" onclick="toast('رفع تقرير (محاكاة)')">+ رفع تقرير</button></div>
+  </div>
+</div>`;
+}
+
+function FacilitiesView(){return `<div class="card"><div class="font-bold mb-2">سوق المرافق</div>
+<div class="overflow-auto"><table class="interactive"><thead><tr><th>المرفق</th><th>المزود</th><th>المدينة</th><th>السعة</th><th>الحالة</th><th>حجز</th></tr></thead>
+<tbody>${Facilities.map(f=>`<tr><td>${f.name}</td><td>${f.provider}</td><td>${f.city}</td><td>${f.capacity}</td><td>${f.status}</td><td><button class="btn btn-primary text-xs" onclick="toast('تم إرسال طلب الحجز')">طلب</button></td></tr>`).join('')}</tbody></table></div></div>`;}
+
+function TrainersView(){return `<div class="card"><div class="font-bold mb-2">المدربون والمتحدثون</div>
+<div class="overflow-auto"><table class="interactive"><thead><tr><th>الاسم</th><th>المجال</th><th>النمط</th><th>التقييم</th><th>طلب تدريب</th></tr></thead>
+<tbody>${Trainers.map(t=>`<tr><td>${t.name}</td><td>${t.topic}</td><td>${t.mode}</td><td>${t.rating}</td><td><button class="btn btn-accent text-xs" onclick="toast('تم إرسال الطلب')">طلب</button></td></tr>`).join('')}</tbody></table></div></div>`;}
+
+function Gov(){guard(); return `${ProjectTrackingView()} ${SponsorshipsView()} ${FacilitiesView()}`;}
+function Emirate(){guard(); return `${ProjectTrackingView()} ${SponsorshipsView()}`;}
+function Private(){guard(); return `${SponsorshipsView()} ${FacilitiesView()} ${TrainersView()}`;}
+function Nonprofit(){guard(); return `${SponsorshipsView()} ${TrainersView()}`;}
+function University(){guard(); return `${FacilitiesView()} ${TrainersView()} ${SponsorshipsView()}`;}
+function Individual(){guard(); return `${TrainersView()} ${FacilitiesView()}`;}
+function Donor(){guard(); return `${ProjectTrackingView()} ${SponsorshipsView()}`;}
+function ADAA(){guard(); return `<div class="card"><div class="font-bold mb-1">أداء — لوحات مؤشرات</div><div class="text-sm text-slate-600">مراجعات أداء وتقارير أثر على مستوى القطاعات والمناطق.</div></div>`;}
+function Trainer(){guard(); return `${TrainersView()}`;}
+
+const routes={'/':Home,'/login':Login,'/select':Select,'/sponsorships':SponsorshipsView,'/gov':Gov,'/emirate':Emirate,'/private':Private,'/nonprofit':Nonprofit,'/university':University,'/individual':Individual,'/donor':Donor,'/adaa':ADAA,'/trainer':Trainer};
+
+function router(){
+  const hash=location.hash||'#/', path=hash.replace('#','');
+  if(path.startsWith('/project/')){ const id=path.split('/')[2]; app.innerHTML=ProjectDetail(id); tableEnhance(app); return; }
+  const view=routes[path]||Home; app.innerHTML=view(); tableEnhance(app); tabsEnhance(app);
+}
+window.addEventListener('hashchange',router); window.addEventListener('load',router);
+</script>
+</body>
+</html>
